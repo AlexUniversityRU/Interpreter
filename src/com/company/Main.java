@@ -20,7 +20,8 @@ public class Main {
                 "ASSIGN\n";
 
 
-        Interpreter interpreter = new Interpreter(input2);
+        //Interpreter interpreter = new Interpreter(input2);
+        Interpret interpret = new Interpret(input2);
 
     }
 }

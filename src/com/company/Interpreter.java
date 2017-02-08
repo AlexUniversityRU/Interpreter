@@ -13,10 +13,11 @@ public class Interpreter {
         S = input;
         System.out.println("\nFetching...");
         fetch();
+        printList();
         System.out.println("\nDecoding...");
-        decode();
+        //decode();
         System.out.println("\nExecuting...");
-        execute();
+        //execute();
     }
 
     // Fetch
@@ -52,7 +53,7 @@ public class Interpreter {
     }
 
     // Decode
-    private void decode(){
+    private void decode1(){
 
         for(String instr : stack){
             if(!instr.matches("ASSIGN") && !instr.matches("SUB") && !instr.matches("MULT")){
@@ -78,12 +79,30 @@ public class Interpreter {
     }
 
     // Execute
-    private void execute(){
+    private void execute1(){
+        String rNumber = "\\d+";
 
-        for(int index = decode.size()-1; index > 0; index--){
+        for(int index = 0; index < decode.size(); index++){
+            if(!isOp(index)){
+                int a = number(index);
+
+            }
 
         }
 
+    }
+
+
+
+    private int number(int index){
+        return Integer.parseInt(decode.get(index));
+    }
+
+    private boolean isOp(int index){
+        if(decode.get(index).matches("ASSIGN") || decode.get(index).matches("SUB") || decode.get(index).matches("MULT")){
+            return true;
+        }
+        return false;
     }
 
     private boolean insertInstruction(int index){
@@ -106,3 +125,4 @@ public class Interpreter {
 
 
 }
+
