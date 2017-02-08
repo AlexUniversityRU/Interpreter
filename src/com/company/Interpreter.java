@@ -1,26 +1,365 @@
 package com.company;
 
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Interpreter {
+
     String S;
-    Stack<String> stack = new Stack<>();
-    ArrayList<String> decode = new ArrayList<>();
+    ArrayList<Token> stack = new ArrayList<Token>();
+    Queue<String> fetchqueue = new LinkedList<>();
 
     public Interpreter(String input){
         S = input;
-        System.out.println("\nFetching...");
+        //System.out.println("\nFetching...");
         fetch();
-        printList();
-        System.out.println("\nDecoding...");
-        //decode();
-        System.out.println("\nExecuting...");
-        //execute();
+        //printFetchQueue();
+        //System.out.println("\nDecoding and Executing...");
+
+        /*for(int i=0; i<13; i++) {
+            decode();
+            //printStack();
+        }*/
+
+        while(!fetchqueue.isEmpty())
+            decode();
+
     }
 
-    // Fetch
+    private void decode(){
+
+        if(fetchqueue.isEmpty()) {
+            //System.out.println("empty detchqueue");
+            return;
+        }
+
+        String front = fetchqueue.remove();
+
+        try {
+            // is Integer number
+            int integer = Integer.parseInt(front);
+            Token token = new Token();
+            token.setVal(integer);
+            stack.add(token);
+        } catch (NumberFormatException e) {
+
+            if(isOp(front)){
+                execute(front);
+
+            } else {
+                // is Variable name
+
+                // check if variable exists in stack, if so move to top.
+                boolean exists = false;
+                int index = 0;
+                Token push_top = null;
+                for(Token t : stack){
+                    if(t.varSet()) {
+                        if (t.getVar().matches(front)) {
+                            push_top = stack.get(index);
+                            exists = true;
+                        }
+                    }
+                    index++;
+                }
+
+                if(!exists) {
+                    Token token = new Token();
+                    token.setVar(front);
+                    stack.add(token);
+                } else {
+                    // Replace existing variable to top of stack
+                    stack.add(stack.remove(stack.indexOf(push_top)));
+                }
+
+            }
+        }
+
+    }
+
+    // Pop two off stack perform operation and push op-value on stack
+    private void execute(String op){
+
+        if(stack.size() == 1){
+            if(op.matches("PRINT")){
+                printTopStack();
+            } else {
+                System.out.println("error : Not enough operands to perform operation: " + op);
+            }
+            return;
+        }
+
+
+        int front = stack.size()-2;
+        Token F = stack.remove(front);
+        front = stack.size()-1;
+        Token S = stack.remove(front);
+
+
+        if(op.matches("ASSIGN")){
+            assign(F,S);
+        }
+        else if(op.matches("SUB")){
+            //System.out.println("Found: " + op);
+            sub(F,S);
+        }
+        else if(op.matches("ADD")){
+            add(S,F);
+        }
+        else if(op.matches("MULT")){
+            mult(F, S);
+        }
+        else if(op.matches("PRINT")){
+            //System.out.println("'PRINT' here");
+            printTopStack();
+        }
+
+    }
+
+    private void printTopStack(){
+        //System.out.println("PRINTING TOP STACK! ");
+        //printStack();
+        System.out.println(stack.get(stack.size()-1).getVal());
+    }
+
+    // F * S
+    private void mult(Token F, Token S){
+        switch(switchSet(F, S)){
+            case 0:
+                // F-var, S-var
+                if(S.valSet() && F.valSet()){
+                    int x = F.getVal() * S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error :" + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
+                }
+                break;
+            case 1:
+                // F-var, S-val
+                if(F.valSet()){
+                    int x = F.getVal() * S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error : " + F.getVar() + " -> variable not initialized!");
+                }
+                break;
+            case 2:{
+                // F-val, S-val
+                int x = F.getVal() * S.getVal();
+                Token token = new Token();
+                token.setVal(x);
+                stack.add(token);
+                break;}
+            case 3:
+                // F-val, S-var
+                if(S.valSet()){
+                    int x = F.getVal() * S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error : " + S.getVar() + " -> variable not initialized!");
+                }
+                break;
+            default:
+                System.out.println("error : Op not found");
+                break;
+        }
+    }
+
+    // F + S
+    private void add(Token F, Token S){
+        switch(switchSet(F, S)){
+            case 0:
+                // F-var, S-var
+                if(S.valSet() && F.valSet()){
+                    int x = F.getVal() + S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error : " + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
+                }
+                break;
+            case 1:
+                // F-var, S-val
+                if(F.valSet()){
+                    int x = F.getVal() + S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error : " + F.getVar() + " -> variable not initialized!");
+                }
+                break;
+            case 2:{
+                // F-val, S-val
+                int x = F.getVal() + S.getVal();
+                Token token = new Token();
+                token.setVal(x);
+                stack.add(token);
+                break;}
+            case 3:
+                // F-val, S-var
+                if(S.valSet()){
+                    int x = F.getVal() + S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                } else {
+                    System.out.println("error : " + S.getVar() + " -> variable not initialized!");
+                }
+                break;
+            default:
+                System.out.println("error : Op not found");
+                break;
+        }
+    }
+
+    private int switchSet(Token F, Token S){
+        if(F.varSet() && S.varSet()){
+            // F-var, S-var
+            //System.out.println("set 0");
+            return 0;
+        }
+        else if(F.varSet() && S.valSet()){
+            // F-var, S-val
+            //System.out.println("set 1");
+            return 1;
+        }
+        else if(F.valSet() && S.valSet()){
+            // F-val, S-val
+            //System.out.println("set 2");
+            return 2;
+        }
+        else if(F.valSet() && S.varSet()){
+            // F-val, S-var
+            //System.out.println("set 3");
+            return 3;
+        }
+        return 4;
+    }
+
+    // F - S - Done
+    private void sub(Token F, Token S){
+        //printStack();
+        //System.out.println("First " + F.getVal() + " Second " + S.getVal());
+        switch(switchSet(F, S)){
+            case 0:
+                // F-var, S-var
+                if(S.valSet() && F.valSet()){
+                    //System.out.println(F.getVal() + "-" + S.getVal());
+                    int x = F.getVal() - S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                    //printStack();
+                } else {
+                    System.out.println("error : " + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
+                }
+
+                break;
+            case 1:{
+                // F-var, S-val
+                //System.out.println(F.getVal() + "-" + S.getVal());
+                int x = F.getVal() - S.getVal();
+                Token token = new Token(F.getVar(), x);
+                stack.add(token);
+                break;}
+            case 2:{
+                // F-val, S-val
+                //System.out.println(F.getVal() + "-" + S.getVal());
+                int x = F.getVal() - S.getVal();
+                Token token = new Token();
+                token.setVal(x);
+                stack.add(token);
+                break;}
+            case 3:{
+                // F-val, S-var
+                if(S.valSet()){
+                    //System.out.println(F.getVal() + "-" + S.getVal());
+                    int x = F.getVal() - S.getVal();
+                    Token token = new Token();
+                    token.setVal(x);
+                    stack.add(token);
+                }
+                break;}
+            default:
+                System.out.println("error : Op not found");
+                break;
+        }
+
+    }
+
+    // x = x
+    private void assign(Token F, Token S){
+        switch(switchSet(F, S)){
+            case 0:
+                // F-var, S-var
+                if(S.valSet()){
+                    F.setVal(S.getVal());
+                    stack.add(F);
+                    //printStack();
+                } else {
+                    System.out.println("error : " + S.getVar() + " -> variable not initialized!");
+                }
+                break;
+            case 1:
+                // F-var, S-val
+                F.setVal(S.getVal());
+                stack.add(F);
+                //printStack();
+                break;
+            case 2:{
+                // F-val, S-val
+                System.out.println("error : val = val -> Failure");
+                break;}
+            case 3:
+                // F-val, S-var
+                System.out.println("error : val = var -> Failure");
+                break;
+            default:
+                System.out.println("error : Op not found in 'assign'");
+                break;
+        }
+    }
+
+    private boolean isOp(String str){
+        if(str.matches("ASSIGN") || str.matches("SUB") || str.matches("MULT") || str.matches("ADD")
+                || str.matches("PRINT")){
+            return true;
+        }
+        return false;
+    }
+
+    private void printStack(){
+        System.out.println("Printing Stack..");
+        for(Token t : stack){
+            if(t.valSet() && t.varSet())
+                System.out.println( t.getVar() + " = " + t.getVal());
+            else if(t.valSet())
+                System.out.println("xxx = " + t.getVal());
+            else if(t.varSet())
+                System.out.println( t.getVar() + " = xxx");
+
+
+        }
+    }
+
+
+    private void printFetchQueue(){
+        for(String part : fetchqueue){
+            System.out.println(part);
+        }
+    }
+
     private void fetch(){
         String[] splitted = S.split("\\s+");
         for(int i=0; i<splitted.length; i++){
@@ -28,101 +367,29 @@ public class Interpreter {
 
             // PUSH onto stack
             if(splitted[i].matches("PUSH")){
-                stack.push(splitted[next]);
+                fetchqueue.add(splitted[next]);
                 i = next;
             }
             // SUB
             else if(splitted[i].matches("SUB")){
-                stack.push(splitted[i]);
+                fetchqueue.add(splitted[i]);
             }
             // MULT
             else if(splitted[i].matches("MULT")){
-                stack.push(splitted[i]);
+                fetchqueue.add(splitted[i]);
             }
             // ASSIGN '='
             else if(splitted[i].matches("ASSIGN")){
-                stack.push(splitted[i]);
+                fetchqueue.add(splitted[i]);
             }
-
-        }
-
-        for(String s : stack){
-            System.out.println(s);
-        }
-
-    }
-
-    // Decode
-    private void decode1(){
-
-        for(String instr : stack){
-            if(!instr.matches("ASSIGN") && !instr.matches("SUB") && !instr.matches("MULT")){
-                decode.add(instr);
-
-            } else if(decode.size() == 2){
-                decode.add(1, instr);
-
-            } else {
-                for(int index =decode.size()-2; index > 0 ; index--){
-                    if(insertInstruction(index)){
-                        decode.add(index+1, instr);
-                        break;
-                    }
-
-                }
-
+            else if(splitted[i].matches("ADD")){
+                fetchqueue.add(splitted[i]);
+            }
+            else if(splitted[i].matches("PRINT")){
+                fetchqueue.add(splitted[i]);
             }
         }
-
-        printList();
-
     }
-
-    // Execute
-    private void execute1(){
-        String rNumber = "\\d+";
-
-        for(int index = 0; index < decode.size(); index++){
-            if(!isOp(index)){
-                int a = number(index);
-
-            }
-
-        }
-
-    }
-
-
-
-    private int number(int index){
-        return Integer.parseInt(decode.get(index));
-    }
-
-    private boolean isOp(int index){
-        if(decode.get(index).matches("ASSIGN") || decode.get(index).matches("SUB") || decode.get(index).matches("MULT")){
-            return true;
-        }
-        return false;
-    }
-
-    private boolean insertInstruction(int index){
-        int after = index+1;
-        if(!decode.get(after).matches("ASSIGN") && !decode.get(after).matches("SUB") && !decode.get(after).matches("MULT") &&
-                !decode.get(index).matches("ASSIGN") && !decode.get(index).matches("SUB") && !decode.get(index).matches("MULT")){
-            return true;
-        }
-        return false;
-    }
-
-    private void printList(){
-
-        for(String s : decode){
-            System.out.print("[" + s + "]");
-        }
-        System.out.println();
-    }
-
-
 
 }
 

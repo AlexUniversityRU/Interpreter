@@ -23,7 +23,7 @@ public class Main {
 
 
         //Interpreter interpreter = new Interpreter(input2);
-        Interpret interpret = new Interpret(input2);
+        Interpreter interpreter = new Interpreter(input2);
 
     }
 }
