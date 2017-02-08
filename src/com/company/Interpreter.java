@@ -2,6 +2,9 @@ package com.company;
 
 
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -12,21 +15,34 @@ public class Interpreter {
     ArrayList<Object> stack = new ArrayList<Object>();
     Queue<String> fetchqueue = new LinkedList<>();
 
-    public Interpreter(String input){
-        S = input;
-        //System.out.println("\nFetching...");
+    public static void main(String[] args) throws IOException {
+        Interpreter interpret = new Interpreter();
+
+    }
+
+    public Interpreter(){
+        //S = input;
+        S = getInput();
         fetch();
-        //printFetchQueue();
-        //System.out.println("\nDecoding and Executing...");
-
-        /*for(int i=0; i<13; i++) {
-            decode();
-            //printStack();
-        }*/
-
+        //printStack();
         while(!fetchqueue.isEmpty())
             decode();
 
+    }
+
+    public String getInput() {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String s;
+        String input = "";
+        try {
+            while ((s = in.readLine()) != null && s.length() != 0) {
+                input += s + " ";
+
+            }
+        } catch(IOException e) {
+            System.out.print(e.getStackTrace());
+        }
+        return input;
     }
 
     private void decode(){
@@ -393,3 +409,49 @@ public class Interpreter {
 
 }
 
+
+class Object {
+    private String variable;
+    private int value = 0;
+    private boolean varSet;
+    private boolean valSet;
+
+    public Object(){
+        varSet = false;
+        valSet = false;
+    }
+
+    public Object(String var, int val){
+        variable = var;
+        value = val;
+        varSet = true;
+        valSet = true;
+    }
+
+    public void setVar(String var){
+        variable = var;
+        varSet = true;
+    }
+    public void setVal(int val){
+        value = val;
+        valSet = true;
+    }
+
+    public String getVar(){
+        return variable;
+    }
+
+    public int getVal(){
+        return value;
+    }
+
+    public boolean varSet(){
+        return varSet;
+    }
+
+    public boolean valSet(){
+        return valSet;
+    }
+
+
+}
