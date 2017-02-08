@@ -21,9 +21,16 @@ public class Main {
                 "PUSH b\n" +
                 "PRINT\n";
 
+        String input3 =
+                "PUSH a\n" +
+                "PUSH 2\n" +
+                "ASSIGN\n" +
+                "PUSH a\n" +
+                "PRINT";
+
 
         //Interpreter interpreter = new Interpreter(input2);
-        Interpreter interpreter = new Interpreter(input2);
+        Interpreter interpreter = new Interpreter(input3);
 
     }
 }
