@@ -17,7 +17,9 @@ public class Main {
                 "PUSH var\n" +
                 "SUB\n" +
                 "MULT\n" +
-                "ASSIGN\n";
+                "ASSIGN\n" +
+                "PUSH b\n" +
+                "PRINT\n";
 
 
         //Interpreter interpreter = new Interpreter(input2);
