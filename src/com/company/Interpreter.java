@@ -12,6 +12,7 @@ import java.util.Queue;
 public class Interpreter {
 
     String S;
+    // Not really a 'stack' but easier to visualize than a list
     ArrayList<Object> stack = new ArrayList<Object>();
     Queue<String> fetchqueue = new LinkedList<>();
 
@@ -21,13 +22,10 @@ public class Interpreter {
     }
 
     public Interpreter(){
-        //S = input;
         S = getInput();
         fetch();
-        //printStack();
         while(!fetchqueue.isEmpty())
             decode();
-
     }
 
     public String getInput() {
@@ -45,10 +43,43 @@ public class Interpreter {
         return input;
     }
 
+    private void fetch(){
+        String[] splitted = S.split("\\s+");
+        for(int i=0; i<splitted.length; i++){
+            int next = i+1;
+
+            // PUSH onto stack
+            if(splitted[i].matches("PUSH")){
+                fetchqueue.add(splitted[next]);
+                i = next;
+            }
+            // SUB
+            else if(splitted[i].matches("SUB")){
+                fetchqueue.add(splitted[i]);
+            }
+            // MULT
+            else if(splitted[i].matches("MULT")){
+                fetchqueue.add(splitted[i]);
+            }
+            // ASSIGN '='
+            else if(splitted[i].matches("ASSIGN")){
+                fetchqueue.add(splitted[i]);
+            }
+            else if(splitted[i].matches("ADD")){
+                fetchqueue.add(splitted[i]);
+            }
+            else if(splitted[i].matches("PRINT")){
+                fetchqueue.add(splitted[i]);
+            } else {
+                System.out.println("error for operator: " + splitted[i]);
+                return;
+            }
+        }
+    }
+
     private void decode(){
 
         if(fetchqueue.isEmpty()) {
-            //System.out.println("empty detchqueue");
             return;
         }
 
@@ -96,7 +127,7 @@ public class Interpreter {
 
     }
 
-    // Pop two off stack perform operation and push op-value on stack
+    // Pop two off stack perform operation and push calculated value back on stack
     private void execute(String op){
 
         if(stack.size() == 1){
@@ -129,8 +160,9 @@ public class Interpreter {
             mult(F, S);
         }
         else if(op.matches("PRINT")){
-            //System.out.println("'PRINT' here");
             printTopStack();
+        } else {
+            System.out.println("error for operator: " + op);
         }
 
     }
@@ -373,37 +405,6 @@ public class Interpreter {
     private void printFetchQueue(){
         for(String part : fetchqueue){
             System.out.println(part);
-        }
-    }
-
-    private void fetch(){
-        String[] splitted = S.split("\\s+");
-        for(int i=0; i<splitted.length; i++){
-            int next = i+1;
-
-            // PUSH onto stack
-            if(splitted[i].matches("PUSH")){
-                fetchqueue.add(splitted[next]);
-                i = next;
-            }
-            // SUB
-            else if(splitted[i].matches("SUB")){
-                fetchqueue.add(splitted[i]);
-            }
-            // MULT
-            else if(splitted[i].matches("MULT")){
-                fetchqueue.add(splitted[i]);
-            }
-            // ASSIGN '='
-            else if(splitted[i].matches("ASSIGN")){
-                fetchqueue.add(splitted[i]);
-            }
-            else if(splitted[i].matches("ADD")){
-                fetchqueue.add(splitted[i]);
-            }
-            else if(splitted[i].matches("PRINT")){
-                fetchqueue.add(splitted[i]);
-            }
         }
     }
 
