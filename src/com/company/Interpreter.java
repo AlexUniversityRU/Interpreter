@@ -12,8 +12,8 @@ import java.util.Queue;
 public class Interpreter {
 
     String S;
-    // Not really a 'stack' but easier to visualize than a list
-    ArrayList<Object> stack = new ArrayList<Object>();
+    // Not really a 'stack' but treated as one until we have to grab
+    ArrayList<ArithmeticObject> stack = new ArrayList<>();
     Queue<String> fetchqueue = new LinkedList<>();
 
     public static void main(String[] args) throws IOException {
@@ -28,27 +28,14 @@ public class Interpreter {
             decode();
     }
 
-    public String getInput() {
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        String s;
-        String input = "";
-        try {
-            while ((s = in.readLine()) != null && s.length() != 0) {
-                input += s + " ";
-
-            }
-        } catch(IOException e) {
-            System.out.print(e.getStackTrace());
-        }
-        return input;
-    }
-
+    // Loop through and fetch the important parts of each line,
+    // add to a queue to be used in decode
     private void fetch(){
         String[] splitted = S.split("\\s+");
         for(int i=0; i<splitted.length; i++){
             int next = i+1;
 
-            // PUSH onto stack
+            // PUSH
             if(splitted[i].matches("PUSH")){
                 fetchqueue.add(splitted[next]);
                 i = next;
@@ -65,9 +52,11 @@ public class Interpreter {
             else if(splitted[i].matches("ASSIGN")){
                 fetchqueue.add(splitted[i]);
             }
+            // ADD '+'
             else if(splitted[i].matches("ADD")){
                 fetchqueue.add(splitted[i]);
             }
+            // PRINT
             else if(splitted[i].matches("PRINT")){
                 fetchqueue.add(splitted[i]);
             } else {
@@ -77,6 +66,9 @@ public class Interpreter {
         }
     }
 
+    // If integer push on stack
+    // else if operation -> execute
+    // else if variable exists, find and push it onto the top
     private void decode(){
 
         if(fetchqueue.isEmpty()) {
@@ -88,9 +80,9 @@ public class Interpreter {
         try {
             // is Integer number
             int integer = Integer.parseInt(front);
-            Object Object = new Object();
-            Object.setVal(integer);
-            stack.add(Object);
+            ArithmeticObject ArithmeticObject = new ArithmeticObject();
+            ArithmeticObject.setVal(integer);
+            stack.add(ArithmeticObject);
         } catch (NumberFormatException e) {
 
             if(isOp(front)){
@@ -102,8 +94,8 @@ public class Interpreter {
                 // check if variable exists in stack, if so move to top.
                 boolean exists = false;
                 int index = 0;
-                Object push_top = null;
-                for(Object t : stack){
+                ArithmeticObject push_top = null;
+                for(ArithmeticObject t : stack){
                     if(t.varSet()) {
                         if (t.getVar().matches(front)) {
                             push_top = stack.get(index);
@@ -114,9 +106,9 @@ public class Interpreter {
                 }
 
                 if(!exists) {
-                    Object Object = new Object();
-                    Object.setVar(front);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVar(front);
+                    stack.add(ArithmeticObject);
                 } else {
                     // Replace existing variable to top of stack
                     stack.add(stack.remove(stack.indexOf(push_top)));
@@ -127,7 +119,8 @@ public class Interpreter {
 
     }
 
-    // Pop two off stack perform operation and push calculated value back on stack
+    // Pop two off stack perform operation and push
+    // calculated value back on stack
     private void execute(String op){
 
         if(stack.size() == 1){
@@ -141,16 +134,15 @@ public class Interpreter {
 
 
         int front = stack.size()-2;
-        Object F = stack.remove(front);
+        ArithmeticObject F = stack.remove(front);
         front = stack.size()-1;
-        Object S = stack.remove(front);
+        ArithmeticObject S = stack.remove(front);
 
 
         if(op.matches("ASSIGN")){
             assign(F,S);
         }
         else if(op.matches("SUB")){
-            //System.out.println("Found: " + op);
             sub(F,S);
         }
         else if(op.matches("ADD")){
@@ -168,21 +160,23 @@ public class Interpreter {
     }
 
     private void printTopStack(){
-        //System.out.println("PRINTING TOP STACK! ");
-        //printStack();
         System.out.println(stack.get(stack.size()-1).getVal());
     }
 
+    // ********************* //
+    // ARITHMETIC OPERATIONS
+    // ********************* //
+
     // F * S
-    private void mult(Object F, Object S){
+    private void mult(ArithmeticObject F, ArithmeticObject S){
         switch(switchSet(F, S)){
             case 0:
                 // F-var, S-var
                 if(S.valSet() && F.valSet()){
                     int x = F.getVal() * S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error :" + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
                 }
@@ -191,9 +185,9 @@ public class Interpreter {
                 // F-var, S-val
                 if(F.valSet()){
                     int x = F.getVal() * S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + F.getVar() + " -> variable not initialized!");
                 }
@@ -201,17 +195,17 @@ public class Interpreter {
             case 2:{
                 // F-val, S-val
                 int x = F.getVal() * S.getVal();
-                Object Object = new Object();
-                Object.setVal(x);
-                stack.add(Object);
+                ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                ArithmeticObject.setVal(x);
+                stack.add(ArithmeticObject);
                 break;}
             case 3:
                 // F-val, S-var
                 if(S.valSet()){
                     int x = F.getVal() * S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + S.getVar() + " -> variable not initialized!");
                 }
@@ -223,15 +217,15 @@ public class Interpreter {
     }
 
     // F + S
-    private void add(Object F, Object S){
+    private void add(ArithmeticObject F, ArithmeticObject S){
         switch(switchSet(F, S)){
             case 0:
                 // F-var, S-var
                 if(S.valSet() && F.valSet()){
                     int x = F.getVal() + S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
                 }
@@ -240,9 +234,9 @@ public class Interpreter {
                 // F-var, S-val
                 if(F.valSet()){
                     int x = F.getVal() + S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + F.getVar() + " -> variable not initialized!");
                 }
@@ -250,17 +244,17 @@ public class Interpreter {
             case 2:{
                 // F-val, S-val
                 int x = F.getVal() + S.getVal();
-                Object Object = new Object();
-                Object.setVal(x);
-                stack.add(Object);
+                ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                ArithmeticObject.setVal(x);
+                stack.add(ArithmeticObject);
                 break;}
             case 3:
                 // F-val, S-var
                 if(S.valSet()){
                     int x = F.getVal() + S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + S.getVar() + " -> variable not initialized!");
                 }
@@ -271,44 +265,17 @@ public class Interpreter {
         }
     }
 
-    private int switchSet(Object F, Object S){
-        if(F.varSet() && S.varSet()){
-            // F-var, S-var
-            //System.out.println("set 0");
-            return 0;
-        }
-        else if(F.varSet() && S.valSet()){
-            // F-var, S-val
-            //System.out.println("set 1");
-            return 1;
-        }
-        else if(F.valSet() && S.valSet()){
-            // F-val, S-val
-            //System.out.println("set 2");
-            return 2;
-        }
-        else if(F.valSet() && S.varSet()){
-            // F-val, S-var
-            //System.out.println("set 3");
-            return 3;
-        }
-        return 4;
-    }
+    // F - S
+    private void sub(ArithmeticObject F, ArithmeticObject S){
 
-    // F - S - Done
-    private void sub(Object F, Object S){
-        //printStack();
-        //System.out.println("First " + F.getVal() + " Second " + S.getVal());
         switch(switchSet(F, S)){
             case 0:
                 // F-var, S-var
                 if(S.valSet() && F.valSet()){
-                    //System.out.println(F.getVal() + "-" + S.getVal());
                     int x = F.getVal() - S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
-                    //printStack();
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 } else {
                     System.out.println("error : " + S.getVar() + " or " + F.getVar() + " -> variable not initialized!");
                 }
@@ -316,27 +283,24 @@ public class Interpreter {
                 break;
             case 1:{
                 // F-var, S-val
-                //System.out.println(F.getVal() + "-" + S.getVal());
                 int x = F.getVal() - S.getVal();
-                Object Object = new Object(F.getVar(), x);
-                stack.add(Object);
+                ArithmeticObject ArithmeticObject = new ArithmeticObject(F.getVar(), x);
+                stack.add(ArithmeticObject);
                 break;}
             case 2:{
                 // F-val, S-val
-                //System.out.println(F.getVal() + "-" + S.getVal());
                 int x = F.getVal() - S.getVal();
-                Object Object = new Object();
-                Object.setVal(x);
-                stack.add(Object);
+                ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                ArithmeticObject.setVal(x);
+                stack.add(ArithmeticObject);
                 break;}
             case 3:{
                 // F-val, S-var
                 if(S.valSet()){
-                    //System.out.println(F.getVal() + "-" + S.getVal());
                     int x = F.getVal() - S.getVal();
-                    Object Object = new Object();
-                    Object.setVal(x);
-                    stack.add(Object);
+                    ArithmeticObject ArithmeticObject = new ArithmeticObject();
+                    ArithmeticObject.setVal(x);
+                    stack.add(ArithmeticObject);
                 }
                 break;}
             default:
@@ -347,7 +311,7 @@ public class Interpreter {
     }
 
     // x = x
-    private void assign(Object F, Object S){
+    private void assign(ArithmeticObject F, ArithmeticObject S){
         switch(switchSet(F, S)){
             case 0:
                 // F-var, S-var
@@ -363,7 +327,6 @@ public class Interpreter {
                 // F-var, S-val
                 F.setVal(S.getVal());
                 stack.add(F);
-                //printStack();
                 break;
             case 2:{
                 // F-val, S-val
@@ -379,6 +342,11 @@ public class Interpreter {
         }
     }
 
+
+    // ********************* //
+    // HELPER FUNCTIONS
+    // ********************* //
+
     private boolean isOp(String str){
         if(str.matches("ASSIGN") || str.matches("SUB") || str.matches("MULT") || str.matches("ADD")
                 || str.matches("PRINT")){
@@ -387,42 +355,60 @@ public class Interpreter {
         return false;
     }
 
-    private void printStack(){
-        System.out.println("Printing Stack..");
-        for(Object t : stack){
-            if(t.valSet() && t.varSet())
-                System.out.println( t.getVar() + " = " + t.getVal());
-            else if(t.valSet())
-                System.out.println("xxx = " + t.getVal());
-            else if(t.varSet())
-                System.out.println( t.getVar() + " = xxx");
-
-
+    private int switchSet(ArithmeticObject F, ArithmeticObject S){
+        if(F.varSet() && S.varSet()){
+            // F-var, S-var
+            return 0;
         }
+        else if(F.varSet() && S.valSet()){
+            // F-var, S-val
+            return 1;
+        }
+        else if(F.valSet() && S.valSet()){
+            // F-val, S-val
+            return 2;
+        }
+        else if(F.valSet() && S.varSet()){
+            // F-val, S-var
+            return 3;
+        }
+        return 4;
     }
 
+    public String getInput() {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String s;
+        String input = "";
+        try {
+            while ((s = in.readLine()) != null && s.length() != 0) {
+                input += s + " ";
 
-    private void printFetchQueue(){
-        for(String part : fetchqueue){
-            System.out.println(part);
+            }
+        } catch(IOException e) {
+            System.out.print(e.getStackTrace());
         }
+        return input;
     }
+
 
 }
 
-
-class Object {
+// ********************* //
+// Object for holding variable
+// names and/or their values.
+// ********************* //
+class ArithmeticObject {
     private String variable;
     private int value = 0;
     private boolean varSet;
     private boolean valSet;
 
-    public Object(){
+    public ArithmeticObject(){
         varSet = false;
         valSet = false;
     }
 
-    public Object(String var, int val){
+    public ArithmeticObject(String var, int val){
         variable = var;
         value = val;
         varSet = true;
